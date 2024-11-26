@@ -23,8 +23,10 @@ else
 	rm -f test/.ek_* test/ek*
 	touch $HEADER
 	touch $SOURCE
-	wget https://github.com/wyatt-radkiewicz/ekutils/raw/$CURRENT_COMMIT/src/ek.h -O test/ek.h
-	wget https://github.com/wyatt-radkiewicz/ekutils/raw/$CURRENT_COMMIT/src/ek.c -O test/ek.c
+	echo "downloading ek.h ($CURRENT_COMMIT)"
+	wget https://github.com/wyatt-radkiewicz/ekutils/raw/$CURRENT_COMMIT/src/ek.h -O test/ek.h > /dev/null 2> /dev/null
+	echo "downloading ek.c ($CURRENT_COMMIT)"
+	wget https://github.com/wyatt-radkiewicz/ekutils/raw/$CURRENT_COMMIT/src/ek.c -O test/ek.c > /dev/null 2> /dev/null
 	echo "updated ekutils to commit $CURRENT_COMMIT"
 fi
 

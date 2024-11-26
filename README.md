@@ -1,9 +1,9 @@
 # Rena Num
-> A single-header number parsing/serializing library in c89
+> A single-header number parsing/serializing library in c99
 
 ## What is Rena Num?
 Rena num is supposed to be a simple to use, relatively fast, portable number
-parser written in c89. TODO: Documentation
+parser written in c99. TODO: Documentation
 
 ## How to build
 Just drop rena.h from src/ or from the releases page to your project and start

@@ -2,9 +2,9 @@
 CHKGOAL		=$(findstring $(1),$(MAKECMDGOALS))
 
 # Building flags and output directory
-RENA_FLAGS	:=-std=gnu89 -pedantic -Werror -Wall
+RENA_FLAGS	:=-pedantic -Werror -Wall
 EKUTIL_FLAGS	:=-DEK_USE_TEST=1 -DEK_USE_UTIL=1
-CFLAGS		:=$(CFLAGS) $(EKUTIL_FLAGS)
+CFLAGS		:=$(CFLAGS) $(EKUTIL_FLAGS) -std=gnu99
 LDFLAGS		:=$(LDFLAGS)
 ifeq ($(call CHKGOAL,rel),rel)
 BIN_DIR		:=bin/rel
@@ -59,7 +59,7 @@ endef
 # Create ekutils files if needed
 ifneq ($(call CHKGOAL,clean),clean)
 _PHONY	:=$(shell touch test/ek.h test/ek.c)
-_PHONY	:=$(shell tools/update_ekutils.sh)
+_PHONY	:=$(shell tools/update_ekutils.sh >&2)
 endif
 
 # Build all source file rules
