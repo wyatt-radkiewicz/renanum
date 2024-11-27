@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
 
 #include "ek.h"
 #include "strings.h"
@@ -35,6 +36,7 @@ static void test_deserialize_speed(volatile const char *const strs[],
 		/ (double)CLOCKS_PER_SEC;
 
 	fprintf(stderr, "number of iterations: %zu\n", iters);
+	fprintf(stderr, "time (ms): %.3f\n", time * 1000.0);
 	fprintf(stderr, "throughput (GB/s): %.2f\n",
 		((double)total_bytes / GB) / time);
 	fprintf(stderr, "throughput (millions num/s): %.2f\n",
