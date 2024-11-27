@@ -46,14 +46,14 @@ static void strtoull__parse_fn(const char *str) {
 	static volatile uint64_t x;
 	x = strtoull(str, NULL, 10);
 }
-static void uint_read_dec_parse_fn(const char *str) {
-	rena_uint_t result = rena_uint_read_dec(str);
+static void read_uint_dec_parse_fn(const char *str) {
+	rena_uint_t result = rena_read_uint_dec(str);
 }
-bool test_uint_read_dec_speed(unsigned id) {
+bool test_read_uint_dec_speed(unsigned id) {
 	test_read_speed(_str_uint, STRSZ_UINT,
-		strtoull__parse_fn, "rena_uint_read_dec strtoull");
+		strtoull__parse_fn, "rena_read_uint_dec strtoull");
 	test_read_speed(_str_uint, STRSZ_UINT,
-		uint_read_dec_parse_fn, "rena_uint_read_dec");
+		read_uint_dec_parse_fn, "rena_read_uint_dec");
 	return true;
 }
 

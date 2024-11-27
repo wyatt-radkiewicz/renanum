@@ -21,9 +21,8 @@ typedef struct rena_uint {
 	const char *end;
 } rena_uint_t;
 
-RENA_EXTERN rena_uint_t rena_uint_read_dec(const char *start);
-RENA_EXTERN rena_uint_t rena_uint_read_dec_ws(const char *start);
-RENA_EXTERN rena_uint_t rena_uint_read_dec_ws_sp(const char *start);
+RENA_EXTERN rena_uint_t rena_read_uint_dec(const char *start);
+RENA_EXTERN rena_uint_t rena_read_uint_dec_ws(const char *start);
 
 #if !RENA_HEADER_ONLY || RENA_IMPLEMENTATION
 
@@ -47,17 +46,29 @@ RENA_EXTERN rena_uint_t rena_uint_read_dec_ws_sp(const char *start);
 #endif
 
 #if _RENA_NEON
-static inline int _rena_uint_dec_16(const char *src, uint64_t *out) {
-	const uint8x16_t nines = vdupq_n_u8((uint8_t)'9');
-	static const uint8_t nright_plus_one[16] = {
+static inline int _rena_get_n_correct_inv(uint8x16_t mask) {
+	static const uint8_t n_minus_16[16] = {
 		-16, -15, -14, -13, -12, -11, -10, -9,
 		-8,  -7,  -6,  -5,  -4,  -3,  -2,  -1
 	};
+	return (int)vminvq_s8(vandq_u8(mask, vld1q_u8(n_minus_16))) + 16;
+}
+static const char *_rena_skip_ws(const char *src) {
+	int n_whitespaces;
+	do {
+		uint8x16_t mask = vld1q_u8((const uint8_t *)src);
+		mask = vorrq_u8(vtstq_u8(mask, vdupq_n_u8((uint8_t)' ')),
+			vtstq_u8(mask, vdupq_n_u8((uint8_t)'\t')));
+		n_whitespaces = _rena_get_n_correct_inv(mask);
+		src += n_whitespaces;
+	} while (n_whitespaces == 16);
+	return src;
+}
+static inline int _rena_uint_dec_16(const char *src, uint64_t *out) {
 	uint8x16_t dgts = vld1q_u8((const uint8_t *)src);
 	dgts = vsubq_u8(dgts, vdupq_n_u8((uint8_t)'0'));
-	const int nright = (int)vminvq_s8(
-		vandq_u8(vcgtq_u8(dgts, nines),
-		vld1q_u8(nright_plus_one))) + 16;
+	const int nright = _rena_get_n_correct_inv(
+		vcgtq_u8(dgts, vdupq_n_u8((uint8_t)'9')));
 	if (!nright) {
 		*out = 0;
 		return 0;
@@ -113,7 +124,7 @@ static inline int _rena_uint_dec_16(const char *src, uint64_t *out) {
 
 	return nright;
 }
-_RENA_UNUSED RENA_EXTERN rena_uint_t rena_uint_read_dec(const char *start) {
+_RENA_UNUSED RENA_EXTERN rena_uint_t rena_read_uint_dec(const char *start) {
 	static const uint64_t shift_amounts[16] = {
 		1ull, 10ull, 100ull, 1000ull, 10000ull, 100000ull, 1000000ull,
 		10000000ull, 100000000ull, 1000000000ull, 10000000000ull,
@@ -140,7 +151,7 @@ err:
 	return out;
 }
 #else
-_RENA_UNUSED RENA_EXTERN rena_uint_t rena_uint_read_dec(const char *start) {
+_RENA_UNUSED RENA_EXTERN rena_uint_t rena_read_uint_dec(const char *start) {
 	rena_uint_t out = { .val = 0, .end = start };
 	bool ovf = false;
 
@@ -152,7 +163,16 @@ _RENA_UNUSED RENA_EXTERN rena_uint_t rena_uint_read_dec(const char *start) {
 	if (ovf) out.end = NULL;
 	return out;
 }
+static const char *_rena_skip_ws(const char *src) {
+	while (*src == ' ' || *src == '\t') ++src;
+	return src;
+}
 #endif
+
+_RENA_UNUSED RENA_EXTERN
+rena_uint_t rena_read_uint_dec_ws(const char *start) {
+	return rena_read_uint_dec(_rena_skip_ws(start));
+}
 
 #endif // !RENA_HEADER_ONLY || RENA_IMPLEMENTATION
 #endif
