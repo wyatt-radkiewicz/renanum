@@ -16,12 +16,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct rena_uint_result {
+typedef struct rena_uint {
 	uint64_t val;
 	const char *end;
-} rena_uint_result_t;
+} rena_uint_t;
 
-RENA_EXTERN rena_uint_result_t rena_uint_deserialize_dec(const char *start);
+RENA_EXTERN rena_uint_t rena_uint_read_dec(const char *start);
+RENA_EXTERN rena_uint_t rena_uint_read_dec_ws(const char *start);
+RENA_EXTERN rena_uint_t rena_uint_read_dec_ws_sp(const char *start);
 
 #if !RENA_HEADER_ONLY || RENA_IMPLEMENTATION
 
@@ -45,19 +47,21 @@ RENA_EXTERN rena_uint_result_t rena_uint_deserialize_dec(const char *start);
 #endif
 
 #if _RENA_NEON
-static inline int _rena_uint_dec_16(rena_uint_result_t *out, bool *ovf) {
+static inline int _rena_uint_dec_16(const char *src, uint64_t *out) {
 	const uint8x16_t nines = vdupq_n_u8((uint8_t)'9');
 	static const uint8_t nright_plus_one[16] = {
 		-16, -15, -14, -13, -12, -11, -10, -9,
 		-8,  -7,  -6,  -5,  -4,  -3,  -2,  -1
 	};
-	uint8x16_t dgts = vld1q_u8((const uint8_t *)out->end);
+	uint8x16_t dgts = vld1q_u8((const uint8_t *)src);
 	dgts = vsubq_u8(dgts, vdupq_n_u8((uint8_t)'0'));
 	const int nright = (int)vminvq_s8(
 		vandq_u8(vcgtq_u8(dgts, nines),
 		vld1q_u8(nright_plus_one))) + 16;
-	if (!nright) return 0;
-	out->end += nright;
+	if (!nright) {
+		*out = 0;
+		return 0;
+	}
 
 	// Make ones digit first
 	dgts = vrev64q_u8(dgts);
@@ -105,24 +109,39 @@ static inline int _rena_uint_dec_16(rena_uint_result_t *out, bool *ovf) {
 	stage3 = vpaddq_u32(stage3, vdupq_n_u32(0));
 	uint64_t lo = vgetq_lane_u32(stage3, 0),
 		 hi = vgetq_lane_u32(stage3, 1);
-	out->val = hi * 100000000 + lo;
+	*out = hi * 100000000 + lo;
 
 	return nright;
 }
-_RENA_UNUSED RENA_EXTERN
-rena_uint_result_t rena_uint_deserialize_dec(const char *const start) {
-	rena_uint_result_t out = { .val = 0, .end = start };
-	bool err = false;
-	const int ndigits = _rena_uint_dec_16(&out, &err);
-	if (ndigits == 16) err |= _rena_uint_dec_16(&out, &err) > 4;
-	else if (ndigits == 0) err = true;
-	if (err) out.end = NULL;
+_RENA_UNUSED RENA_EXTERN rena_uint_t rena_uint_read_dec(const char *start) {
+	static const uint64_t shift_amounts[16] = {
+		1ull, 10ull, 100ull, 1000ull, 10000ull, 100000ull, 1000000ull,
+		10000000ull, 100000000ull, 1000000000ull, 10000000000ull,
+		100000000000ull, 1000000000000ull, 10000000000000ull,
+		100000000000000ull, 1000000000000000ull
+	};
+	rena_uint_t out;
+	out.end = start;
+
+	int ndigits = _rena_uint_dec_16(out.end, &out.val);
+	if (ndigits == 16) {
+		uint64_t tmp;
+		out.end += ndigits;
+		ndigits = _rena_uint_dec_16(out.end, &tmp);
+		if (_RENA_MULV_U64(out.val, shift_amounts[ndigits], &out.val)
+			|| _RENA_ADDV_U64(out.val, tmp, &out.val)) goto err;
+	} else if (ndigits == 0) {
+		goto err;
+	}
+
+	return out;
+err:
+	out.end = NULL;
 	return out;
 }
 #else
-_RENA_UNUSED RENA_EXTERN
-rena_uint_result_t rena_uint_deserialize_dec(const char *const start) {
-	rena_uint_result_t out = { .val = 0, .end = start };
+_RENA_UNUSED RENA_EXTERN rena_uint_t rena_uint_read_dec(const char *start) {
+	rena_uint_t out = { .val = 0, .end = start };
 	bool ovf = false;
 
 	while (*out.end >= '0' && *out.end <= '9') {

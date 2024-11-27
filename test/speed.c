@@ -17,14 +17,13 @@ static size_t string_array_bytes(const char *strings[], size_t nstr) {
 
 typedef void (parse_fn)(const char *str);
 
-static void test_deserialize_speed(volatile const char *const strs[],
+static void test_read_speed(volatile const char *const strs[],
 		size_t nstrs, parse_fn *parse, const char *parse_name) {
 	const size_t iters = 1000 * 1000;
 	size_t total_bytes = string_array_bytes((const char **)strs,
 						nstrs) * iters;
-	rena_uint_result_t result;
 
-	fprintf(stderr, "deserialize speed test (%s)\n", parse_name);
+	fprintf(stderr, "read speed test (%s)\n", parse_name);
 
 	const clock_t start = clock();
 	for (size_t iter = 0; iter < iters; iter++) {
@@ -47,14 +46,14 @@ static void strtoull__parse_fn(const char *str) {
 	static volatile uint64_t x;
 	x = strtoull(str, NULL, 10);
 }
-static void uint_deserialize_dec_parse_fn(const char *str) {
-	rena_uint_result_t result = rena_uint_deserialize_dec(str);
+static void uint_read_dec_parse_fn(const char *str) {
+	rena_uint_t result = rena_uint_read_dec(str);
 }
-bool test_uint_deserialize_dec_speed(unsigned id) {
-	test_deserialize_speed(_str_uint, STRSZ_UINT,
-		strtoull__parse_fn, "rena_uint_deserialize_dec strtoull");
-	test_deserialize_speed(_str_uint, STRSZ_UINT,
-		uint_deserialize_dec_parse_fn, "rena_uint_deserialize_dec");
+bool test_uint_read_dec_speed(unsigned id) {
+	test_read_speed(_str_uint, STRSZ_UINT,
+		strtoull__parse_fn, "rena_uint_read_dec strtoull");
+	test_read_speed(_str_uint, STRSZ_UINT,
+		uint_read_dec_parse_fn, "rena_uint_read_dec");
 	return true;
 }
 

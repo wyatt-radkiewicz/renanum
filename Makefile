@@ -19,9 +19,9 @@ SRC2OBJ		=$(patsubst %.c,$(BIN_DIR)/obj/%.o,$(1))
 SRCS		:=$(sort $(shell find test -type f -name "*.c") test/ek.c)
 
 # Targets
-.PHONY: dbg rel run clean
-dbg: $(BIN_DIR)/test rena_obj
-rel: $(BIN_DIR)/test rena_obj
+.PHONY: clean
+dbg: $(BIN_DIR)/test $(BIN_DIR)/src/rena.o
+rel: $(BIN_DIR)/test $(BIN_DIR)/src/rena.o
 clean:
 	rm -rf bin/
 	rm -rf test/ek* test/.ek*
@@ -43,8 +43,6 @@ $(BIN_DIR)/test: $(call SRC2OBJ,$(SRCS))
 
 # Build the rena.h into an object file so that it can be tested for compilation
 # this object file isn't actually used in the test executable
-.PHONY: rena_obj
-rena_obj: $(BIN_DIR)/src/rena.o
 $(BIN_DIR)/src/rena.o: src/rena.h
 	@mkdir -p $(dir $@)
 	$(CC) $(RENA_FLAGS) $(CFLAGS) -c $^ -o $@
@@ -58,7 +56,7 @@ endef
 
 # Create ekutils files if needed
 ifneq ($(call CHKGOAL,clean),clean)
-_PHONY	:=$(shell touch test/ek.h test/ek.c)
+_PHONY	:=$(shell touch -a test/ek.h test/ek.c)
 _PHONY	:=$(shell tools/update_ekutils.sh >&2)
 endif
 
