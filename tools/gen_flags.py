@@ -127,11 +127,30 @@ stdout.write('\n\n')
 #dbglist = list(dbglist)
 #dbglist.sort()
 
-stdout.write(f'static __attribute__((error(\n"\\n=======================================\\n"\n"RENA_ERR - UNSUPPORTED TYPE"\n"\\n=======================================")))\nconst char *_rena_rd_err_type(const char *str, void *out) {{\n\treturn NULL;\n}}\n\n')
-stdout.write(f'static __attribute__((error(\n"\\n=======================================\\n"\n"RENA_ERR - NOT A RENA FLAG"\n"\\n=======================================")))\nconst char *_rena_rd_err_flag(const char *str, void *out) {{\n\treturn NULL;\n}}\n\n')
-stdout.write(f'static __attribute__((error(\n"\\n=======================================\\n"\n"RENA_ERR - INVALID TYPE OR FLAG COMBO"\n"\\n=======================================")))\nconst char *_rena_rd_err_type_flags(const char *str, void *out) {{\n\treturn NULL;\n}}\n')
+stdout.write('#define _RENA_ERROR_TYPE __attribute__((error( \\\n'
++ '"\\n=======================================\\n" \\\n'
++ '"RENA_ERR - UNSUPPORTED TYPE" \\\n'
++ '"\\n=======================================")))\n')
+stdout.write('#define _RENA_ERROR_FLAG __attribute__((error( \\\n'
++ '"\\n=======================================\\n" \\\n'
++ '"RENA_ERR - NOT A RENA FLAG" \\\n'
++ '"\\n=======================================")))\n')
+stdout.write('#define _RENA_ERROR_TYPEFLAG __attribute__((error( \\\n'
++ '"\\n=======================================\\n" \\\n'
++ '"RENA_ERR - INVALID TYPE OR FLAG COMBO" \\\n'
++ '"\\n=======================================")))\n\n')
 
-stdout.write('// end --gen_flags.py--\n\n')
+stdout.write(f'static _RENA_ERROR_TYPE const char *_rena_rd_err_type(const char *str, void *out) {{\n\treturn NULL;\n}}\n')
+stdout.write(f'static _RENA_ERROR_FLAG const char *_rena_rd_err_flag(const char *str, void *out) {{\n\treturn NULL;\n}}\n')
+stdout.write(f'static _RENA_ERROR_TYPEFLAG const char *_rena_rd_err_type_flags(const char *str, void *out) {{\n\treturn NULL;\n}}\n')
+stdout.write(f'static _RENA_ERROR_TYPE const char *_rena_rdsafe_err_type(const char *str, size_t len, void *out) {{\n\treturn NULL;\n}}\n\n')
+stdout.write(f'static _RENA_ERROR_FLAG const char *_rena_rdsafe_err_flag(const char *str, size_t len, void *out) {{\n\treturn NULL;\n}}\n\n')
+stdout.write(f'static _RENA_ERROR_TYPEFLAG const char *_rena_rdsafe_err_type_flags(const char *str, size_t len, void *out) {{\n\treturn NULL;\n}}\n')
+stdout.write(f'static _RENA_ERROR_TYPE const char *_rena_wr_err_type(char *buf, size_t len, int _num) {{\n\treturn NULL;\n}}\n')
+stdout.write(f'static _RENA_ERROR_FLAG const char *_rena_wr_err_flag(char *buf, size_t len, int _num) {{\n\treturn NULL;\n}}\n')
+stdout.write(f'static _RENA_ERROR_TYPEFLAG const char *_rena_wr_err_type_flags(char *buf, size_t len, int _num) {{\n\treturn NULL;\n}}\n')
+
+stdout.write('\n// end --gen_flags.py--\n\n')
 
 #for func in dbglist:
     #stdout.write(f'static __attribute__((always_inline)) const char *{func[0]}(const char *str, {func[1]} *out) {{ return "{func[0]}"; }}\n')
